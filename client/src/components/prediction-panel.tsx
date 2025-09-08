@@ -138,35 +138,37 @@ export function PredictionPanel({ selectedDataset }: PredictionPanelProps) {
             ))}
           </div>
           
-          <div className="flex space-x-4">
+          <Button
+            data-testid="button-predict"
+            onClick={handlePredict}
+            disabled={predictionMutation.isPending}
+            className="w-full"
+          >
+            <i className="fas fa-brain mr-2"></i>
+            {predictionMutation.isPending ? "Predicting..." : "Predict with All Models"}
+          </Button>
+        </div>
+
+        {/* CSV Upload Section - Moved Lower */}
+        <div className="border-t border-border pt-6">
+          <h3 className="text-md font-medium text-foreground mb-4">Batch Processing</h3>
+          <div className="relative">
             <Button
-              data-testid="button-predict"
-              onClick={handlePredict}
-              disabled={predictionMutation.isPending}
-              className="flex-1"
+              data-testid="button-upload-csv"
+              variant="outline"
+              className="flex items-center w-full"
+              disabled={csvUploadMutation.isPending}
             >
-              <i className="fas fa-brain mr-2"></i>
-              {predictionMutation.isPending ? "Predicting..." : "Predict with All Models"}
+              <i className="fas fa-upload mr-2"></i>
+              {csvUploadMutation.isPending ? "Processing..." : "Upload CSV for Batch Predictions"}
             </Button>
-            
-            <div className="relative">
-              <Button
-                data-testid="button-upload-csv"
-                variant="outline"
-                className="flex items-center"
-                disabled={csvUploadMutation.isPending}
-              >
-                <i className="fas fa-upload mr-2"></i>
-                {csvUploadMutation.isPending ? "Processing..." : "Upload CSV"}
-              </Button>
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleCsvUpload}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                data-testid="input-csv"
-              />
-            </div>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleCsvUpload}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              data-testid="input-csv"
+            />
           </div>
         </div>
 
