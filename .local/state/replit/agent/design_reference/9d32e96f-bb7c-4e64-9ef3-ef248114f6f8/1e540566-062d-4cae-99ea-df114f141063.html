@@ -1,0 +1,512 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancer Classification Models Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                    chart: {
+                        "1": "var(--chart-1)",
+                        "2": "var(--chart-2)",
+                        "3": "var(--chart-3)",
+                        "4": "var(--chart-4)",
+                        "5": "var(--chart-5)",
+                    }
+                },
+                fontFamily: {
+                    sans: ["var(--font-sans)"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+    :root {
+        --background: hsl(0 0% 100%);
+        --foreground: hsl(222.2 84% 4.9%);
+        --card: hsl(0 0% 100%);
+        --card-foreground: hsl(222.2 84% 4.9%);
+        --popover: hsl(0 0% 100%);
+        --popover-foreground: hsl(222.2 84% 4.9%);
+        --primary: hsl(217.2 91.2% 59.8%);
+        --primary-foreground: hsl(0 0% 100%);
+        --secondary: hsl(210 40% 96%);
+        --secondary-foreground: hsl(222.2 47.4% 11.2%);
+        --muted: hsl(210 40% 96%);
+        --muted-foreground: hsl(215.4 16.3% 46.9%);
+        --accent: hsl(210 40% 96%);
+        --accent-foreground: hsl(222.2 47.4% 11.2%);
+        --destructive: hsl(0 84.2% 60.2%);
+        --destructive-foreground: hsl(0 0% 100%);
+        --border: hsl(214.3 31.8% 91.4%);
+        --input: hsl(214.3 31.8% 91.4%);
+        --ring: hsl(217.2 91.2% 59.8%);
+        --radius: 8px;
+        --chart-1: hsl(217.2 91.2% 59.8%);
+        --chart-2: hsl(142.1 76.2% 36.3%);
+        --chart-3: hsl(47.9 95.8% 53.1%);
+        --chart-4: hsl(0 84.2% 60.2%);
+        --chart-5: hsl(270.7 91% 65.1%);
+        --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-background text-foreground font-sans antialiased">
+    <!-- @COMPONENT: MainDashboard -->
+    <div class="min-h-screen bg-gray-50">
+        <!-- Header -->
+        <!-- @COMPONENT: Header -->
+        <header class="bg-white border-b border-border shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-microscope text-primary text-2xl"></i>
+                            <h1 class="text-xl font-bold text-foreground">Cancer Classification Dashboard</h1>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-muted-foreground">Connected to ML Models</span>
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: Header -->
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Dataset Selector -->
+            <!-- @COMPONENT: DatasetSelector -->
+            <div class="mb-8">
+                <div class="bg-white rounded-lg shadow-sm border border-border p-6">
+                    <h2 class="text-lg font-semibold text-foreground mb-4">Select Cancer Dataset</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- @STATE: selectedDataset:string = 'breast' -->
+                        <button data-event="click:selectDataset" data-implementation="Set selectedDataset state" class="relative p-4 border-2 border-primary bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-ribbon text-primary text-xl"></i>
+                                <div class="text-left">
+                                    <h3 class="font-medium text-foreground">Breast Cancer</h3>
+                                    <p class="text-sm text-muted-foreground">XGB+SVM, XGB+LR, XGB+RF</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-2 right-2">
+                                <i class="fas fa-check-circle text-primary"></i>
+                            </div>
+                        </button>
+                        
+                        <button data-event="click:selectDataset" data-implementation="Set selectedDataset state" class="relative p-4 border-2 border-border rounded-lg hover:bg-accent transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-stomach text-muted-foreground text-xl"></i>
+                                <div class="text-left">
+                                    <h3 class="font-medium text-foreground">Gastric Cancer</h3>
+                                    <p class="text-sm text-muted-foreground">XGB+SVM, XGB+LR, XGB+RF</p>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button data-event="click:selectDataset" data-implementation="Set selectedDataset state" class="relative p-4 border-2 border-border rounded-lg hover:bg-accent transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-lungs text-muted-foreground text-xl"></i>
+                                <div class="text-left">
+                                    <h3 class="font-medium text-foreground">Lung Cancer</h3>
+                                    <p class="text-sm text-muted-foreground">XGB+SVM, XGB+LR, XGB+RF</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: DatasetSelector -->
+
+            <!-- Main Dashboard Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Prediction Panel -->
+                <!-- @COMPONENT: PredictionPanel -->
+                <div class="bg-white rounded-lg shadow-sm border border-border">
+                    <div class="p-6 border-b border-border">
+                        <h2 class="text-lg font-semibold text-foreground flex items-center">
+                            <i class="fas fa-calculator text-primary mr-2"></i>
+                            Model Predictions
+                        </h2>
+                        <p class="text-sm text-muted-foreground mt-1">Enter patient features to get predictions from all models</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <!-- Feature Input Form -->
+                        <div class="space-y-4 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- @MAP: features.map(feature => ( -->
+                                <div data-mock="true">
+                                    <label class="block text-sm font-medium text-foreground mb-2">Mean Radius</label>
+                                    <input type="number" data-bind="features.mean_radius" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent" placeholder="14.127" step="0.001" />
+                                </div>
+                                <div data-mock="true">
+                                    <label class="block text-sm font-medium text-foreground mb-2">Mean Texture</label>
+                                    <input type="number" data-bind="features.mean_texture" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent" placeholder="19.289" step="0.001" />
+                                </div>
+                                <div data-mock="true">
+                                    <label class="block text-sm font-medium text-foreground mb-2">Mean Perimeter</label>
+                                    <input type="number" data-bind="features.mean_perimeter" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent" placeholder="91.969" step="0.001" />
+                                </div>
+                                <div data-mock="true">
+                                    <label class="block text-sm font-medium text-foreground mb-2">Mean Area</label>
+                                    <input type="number" data-bind="features.mean_area" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent" placeholder="654.889" step="0.001" />
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                            
+                            <div class="flex space-x-4">
+                                <button data-event="click:predictModels" data-implementation="Call /predict API endpoint" class="flex-1 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors flex items-center justify-center">
+                                    <i class="fas fa-brain mr-2"></i>
+                                    Predict with All Models
+                                </button>
+                                <button data-event="click:uploadCSV" data-implementation="Handle CSV file upload" class="px-4 py-2 border border-border rounded-md hover:bg-accent transition-colors flex items-center">
+                                    <i class="fas fa-upload mr-2"></i>
+                                    Upload CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Prediction Results -->
+                        <!-- @STATE: predictions:object = {} -->
+                        <div class="space-y-4" data-mock="true">
+                            <h3 class="text-md font-medium text-foreground">Prediction Results</h3>
+                            
+                            <!-- XGB+SVM Result -->
+                            <div class="border border-border rounded-lg p-4 bg-accent/50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium text-foreground">XGBoost + SVM</span>
+                                    <span class="text-sm text-muted-foreground">Confidence: 87.5%</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <span class="text-sm font-medium text-green-700">Benign</span>
+                                    <span class="text-sm text-muted-foreground">(Probability: 0.875)</span>
+                                </div>
+                            </div>
+
+                            <!-- XGB+LR Result -->
+                            <div class="border border-border rounded-lg p-4 bg-accent/50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium text-foreground">XGBoost + Logistic Regression</span>
+                                    <span class="text-sm text-muted-foreground">Confidence: 91.2%</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <span class="text-sm font-medium text-green-700">Benign</span>
+                                    <span class="text-sm text-muted-foreground">(Probability: 0.912)</span>
+                                </div>
+                            </div>
+
+                            <!-- XGB+RF Result -->
+                            <div class="border border-border rounded-lg p-4 bg-accent/50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium text-foreground">XGBoost + Random Forest</span>
+                                    <span class="text-sm text-muted-foreground">Confidence: 89.8%</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <span class="text-sm font-medium text-green-700">Benign</span>
+                                    <span class="text-sm text-muted-foreground">(Probability: 0.898)</span>
+                                </div>
+                            </div>
+
+                            <!-- Consensus -->
+                            <div class="border-2 border-primary rounded-lg p-4 bg-primary/5">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i class="fas fa-check-circle text-primary"></i>
+                                    <span class="font-semibold text-primary">Model Consensus</span>
+                                </div>
+                                <p class="text-sm text-foreground">All three models predict <strong>Benign</strong> with high confidence (avg: 89.5%)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: PredictionPanel -->
+
+                <!-- Model Comparison Panel -->
+                <!-- @COMPONENT: ModelComparisonPanel -->
+                <div class="bg-white rounded-lg shadow-sm border border-border">
+                    <div class="p-6 border-b border-border">
+                        <h2 class="text-lg font-semibold text-foreground flex items-center">
+                            <i class="fas fa-chart-bar text-primary mr-2"></i>
+                            Model Performance Comparison
+                        </h2>
+                        <p class="text-sm text-muted-foreground mt-1">Compare metrics across all models and datasets</p>
+                    </div>
+
+                    <!-- Dataset Tabs -->
+                    <div class="border-b border-border">
+                        <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                            <!-- @STATE: activeTab:string = 'breast' -->
+                            <button data-event="click:setActiveTab" data-implementation="Switch active comparison tab" class="border-b-2 border-primary text-primary py-4 px-1 text-sm font-medium">
+                                Breast Cancer
+                            </button>
+                            <button data-event="click:setActiveTab" data-implementation="Switch active comparison tab" class="border-b-2 border-transparent text-muted-foreground hover:text-foreground py-4 px-1 text-sm font-medium">
+                                Gastric Cancer
+                            </button>
+                            <button data-event="click:setActiveTab" data-implementation="Switch active comparison tab" class="border-b-2 border-transparent text-muted-foreground hover:text-foreground py-4 px-1 text-sm font-medium">
+                                Lung Cancer
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div class="p-6">
+                        <!-- Metrics Table -->
+                        <div class="mb-6">
+                            <h3 class="text-md font-medium text-foreground mb-4">Performance Metrics</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-border">
+                                    <thead class="bg-muted">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Model</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Accuracy</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Precision</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">AUC</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Kappa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-border" data-mock="true">
+                                        <tr>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-foreground">XGB + SVM</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.952</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.947</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.963</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.901</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-foreground">XGB + LR</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.965</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.958</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.971</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.925</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-foreground">XGB + RF</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.958</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.951</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.967</td>
+                                            <td class="px-4 py-4 whitespace-nowrap text-sm text-foreground">0.913</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Performance Chart -->
+                        <div class="mb-6">
+                            <h3 class="text-md font-medium text-foreground mb-4">Model Performance Comparison</h3>
+                            <div class="h-64 bg-muted rounded-lg flex items-center justify-center">
+                                <canvas id="performanceChart" class="w-full h-full" data-implementation="Implement Recharts bar chart for model comparison"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- ROC Curves (Optional) -->
+                        <div>
+                            <h3 class="text-md font-medium text-foreground mb-4">ROC Curves</h3>
+                            <div class="h-64 bg-muted rounded-lg flex items-center justify-center">
+                                <canvas id="rocChart" class="w-full h-full" data-implementation="Implement ROC curve visualization if model data available"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ModelComparisonPanel -->
+            </div>
+
+            <!-- Additional Analytics Section -->
+            <!-- @COMPONENT: AnalyticsSection -->
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Model Summary Cards -->
+                <div class="bg-white rounded-lg shadow-sm border border-border p-6" data-mock="true">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-trophy text-2xl text-yellow-500"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-muted-foreground">Best Performing Model</p>
+                            <p class="text-lg font-semibold text-foreground">XGB + Logistic Regression</p>
+                            <p class="text-sm text-muted-foreground">96.5% Accuracy</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border border-border p-6" data-mock="true">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-database text-2xl text-blue-500"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-muted-foreground">Total Datasets</p>
+                            <p class="text-lg font-semibold text-foreground">3 Cancer Types</p>
+                            <p class="text-sm text-muted-foreground">Breast, Gastric, Lung</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border border-border p-6" data-mock="true">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-cogs text-2xl text-green-500"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-muted-foreground">Active Models</p>
+                            <p class="text-lg font-semibold text-foreground">9 Models</p>
+                            <p class="text-sm text-muted-foreground">3 per dataset</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: AnalyticsSection -->
+        </div>
+    </div>
+    <!-- @END_COMPONENT: MainDashboard -->
+
+    <script>
+    // TODO: Implement React components and API integration with axios
+    // TODO: Connect to FastAPI backend endpoints /predict and /metrics
+    // TODO: Implement state management for dataset selection and predictions
+    // TODO: Add Recharts for interactive data visualizations
+    
+    (function() {
+        // Mock chart initialization for demonstration
+        const performanceCtx = document.getElementById('performanceChart');
+        const rocCtx = document.getElementById('rocChart');
+        
+        if (performanceCtx) {
+            new Chart(performanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['XGB+SVM', 'XGB+LR', 'XGB+RF'],
+                    datasets: [
+                        {
+                            label: 'Accuracy',
+                            data: [0.952, 0.965, 0.958],
+                            backgroundColor: 'rgba(37, 99, 235, 0.6)',
+                            borderColor: 'rgba(37, 99, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'AUC',
+                            data: [0.963, 0.971, 0.967],
+                            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        if (rocCtx) {
+            new Chart(rocCtx, {
+                type: 'line',
+                data: {
+                    labels: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+                    datasets: [
+                        {
+                            label: 'XGB+SVM (AUC=0.963)',
+                            data: [0, 0.05, 0.12, 0.25, 0.45, 0.65, 0.78, 0.85, 0.92, 0.97, 1.0],
+                            borderColor: 'rgba(37, 99, 235, 1)',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'XGB+LR (AUC=0.971)',
+                            data: [0, 0.03, 0.08, 0.18, 0.35, 0.55, 0.72, 0.82, 0.90, 0.96, 1.0],
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'XGB+RF (AUC=0.967)',
+                            data: [0, 0.04, 0.10, 0.22, 0.40, 0.60, 0.75, 0.84, 0.91, 0.96, 1.0],
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: false,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'False Positive Rate'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'True Positive Rate'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

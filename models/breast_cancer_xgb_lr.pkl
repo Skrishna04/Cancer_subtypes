@@ -1,15 +1,54 @@
 # Placeholder for breast cancer XGBoost + Logistic Regression model
 import joblib
 
-placeholder_model = {
-    'xgb_model': None,
-    'meta_model': None,
-    'scaler': None,
-    'metrics': {
-        'accuracy': 0.965,
-        'precision': 0.958,
-        'auc': 0.971,
-        'kappa': 0.925
+placeholder_model = {#XGB + RF
+# Train XGBoost to get feature importances
+xgb_selector = XGBClassifier(n_estimators=500, learning_rate=0.05, max_depth=6,
+                             subsample=0.8, colsample_bytree=0.8, random_state=42,
+                             use_label_encoder=False, eval_metric="logloss")
+
+xgb_selector.fit(X_train, y_train)
+
+# Get feature importances
+feature_importances = pd.Series(xgb_selector.feature_importances_, index=X.columns)
+
+# List of feature selection counts
+feature_counts = [10, 50, 100, 500, 1000]
+
+# Initialize a DataFrame to store results
+results_df = pd.DataFrame(columns=["Features", "AUC", "Accuracy", "Precision", "Kappa"])
+
+# Loop through different feature counts
+for num_features in feature_counts:
+    # Select top N features
+    top_features = feature_importances.nlargest(num_features).index.tolist()
+
+    # Filter dataset with selected features
+    X_train_selected = X_train[top_features]
+    X_test_selected = X_test[top_features]
+
+    # Train Random Forest classifier
+    rf_clf = RandomForestClassifier(n_estimators=500, max_depth=None, min_samples_split=2,
+                                    random_state=42, n_jobs=-1)
+    rf_clf.fit(X_train_selected, y_train)
+
+    # Make predictions
+    y_pred = rf_clf.predict(X_test_selected)
+    y_pred_proba = rf_clf.predict_proba(X_test_selected)[:, 1]  # Probability estimates for AUC calculation
+
+    # Evaluate model performance
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    auc = roc_auc_score(y_test, y_pred_proba)
+    kappa = cohen_kappa_score(y_test, y_pred)
+
+    # Store results in DataFrame
+    results_df = pd.concat([results_df, pd.DataFrame([[num_features, auc, accuracy, precision, kappa]],
+                                                      columns=["Features", "AUC", "Accuracy", "Precision", "Kappa"])],
+                                                      ignore_index=True)
+
+# Display final results
+print(results_df)
     }
 }
 

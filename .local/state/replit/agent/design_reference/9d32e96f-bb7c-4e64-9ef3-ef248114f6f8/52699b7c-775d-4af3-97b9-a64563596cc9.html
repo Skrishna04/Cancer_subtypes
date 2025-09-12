@@ -1,0 +1,742 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancer Classification Model Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                }
+            },
+            fontFamily: {
+                sans: ["Inter", "sans-serif"],
+            }
+        },
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(221.2 83.2% 53.3%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(210 40% 96%);
+            --secondary-foreground: hsl(222.2 84% 4.9%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(210 40% 96%);
+            --accent-foreground: hsl(222.2 84% 4.9%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(221.2 83.2% 53.3%);
+            --radius: 0.5rem;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-background font-sans antialiased">
+    <!-- @COMPONENT: AppLayout -->
+    <div class="min-h-screen bg-background">
+        <!-- Header -->
+        <!-- @COMPONENT: Header -->
+        <header class="bg-card border-b border-border shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-primary text-primary-foreground p-2 rounded-lg">
+                            <i class="fas fa-microscope text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-semibold text-foreground">Cancer Classification Dashboard</h1>
+                            <p class="text-sm text-muted-foreground">ML Model Performance & Prediction System</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            9 Models Active
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: Header -->
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Prediction Panel -->
+                <!-- @COMPONENT: PredictionPanel -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- Dataset Selection Card -->
+                    <div class="bg-card rounded-lg border border-border shadow-sm p-6">
+                        <h2 class="text-lg font-semibold text-foreground mb-4 flex items-center">
+                            <i class="fas fa-database mr-2 text-primary"></i>
+                            Dataset Selection
+                        </h2>
+                        
+                        <!-- Dataset Selector -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Cancer Type</label>
+                                <select class="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring" data-bind="selectedDataset">
+                                    <option value="breast">Breast Cancer</option>
+                                    <option value="gastric">Gastric Cancer</option>
+                                    <option value="lung">Lung Cancer</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Model Status Indicators -->
+                            <div class="grid grid-cols-3 gap-2 mt-4">
+                                <div class="bg-muted p-2 rounded text-center">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full mx-auto mb-1"></div>
+                                    <div class="text-xs font-medium">XGB+SVM</div>
+                                </div>
+                                <div class="bg-muted p-2 rounded text-center">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full mx-auto mb-1"></div>
+                                    <div class="text-xs font-medium">XGB+LR</div>
+                                </div>
+                                <div class="bg-muted p-2 rounded text-center">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full mx-auto mb-1"></div>
+                                    <div class="text-xs font-medium">XGB+RF</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature Input Card -->
+                    <div class="bg-card rounded-lg border border-border shadow-sm p-6">
+                        <h2 class="text-lg font-semibold text-foreground mb-4 flex items-center">
+                            <i class="fas fa-upload mr-2 text-primary"></i>
+                            Input Method
+                        </h2>
+                        
+                        <!-- Input Method Tabs -->
+                        <div class="flex space-x-1 bg-muted rounded-lg p-1 mb-4">
+                            <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md bg-background text-foreground shadow-sm" data-tab="manual">
+                                Manual Entry
+                            </button>
+                            <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md text-muted-foreground hover:text-foreground" data-tab="csv">
+                                CSV Upload
+                            </button>
+                        </div>
+
+                        <!-- Manual Entry Form -->
+                        <div id="manual-input" class="space-y-4">
+                            <!-- Sample feature inputs for breast cancer -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-1">Mean Radius</label>
+                                    <input type="number" step="0.01" placeholder="14.5" class="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-sm" data-mock="true">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-1">Mean Texture</label>
+                                    <input type="number" step="0.01" placeholder="19.8" class="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-sm" data-mock="true">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-1">Mean Perimeter</label>
+                                    <input type="number" step="0.01" placeholder="94.2" class="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-sm" data-mock="true">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-1">Mean Area</label>
+                                    <input type="number" step="0.01" placeholder="684.5" class="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-sm" data-mock="true">
+                                </div>
+                            </div>
+                            <!-- More fields would be added dynamically based on dataset -->
+                            <div class="text-xs text-muted-foreground">
+                                + 26 more features (dynamically loaded per dataset)
+                            </div>
+                        </div>
+
+                        <!-- CSV Upload Form -->
+                        <div id="csv-input" class="hidden space-y-4">
+                            <div class="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                                <i class="fas fa-file-csv text-3xl text-muted-foreground mb-2"></i>
+                                <p class="text-sm font-medium text-foreground mb-1">Upload CSV File</p>
+                                <p class="text-xs text-muted-foreground mb-3">Drag and drop or click to select</p>
+                                <input type="file" accept=".csv" class="hidden" id="csv-file" data-implementation="Handle CSV file upload">
+                                <label for="csv-file" class="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 cursor-pointer">
+                                    <i class="fas fa-upload mr-2"></i>
+                                    Choose File
+                                </label>
+                            </div>
+                        </div>
+
+                        <button class="w-full mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring" data-event="click:handlePredict">
+                            <i class="fas fa-brain mr-2"></i>
+                            Generate Predictions
+                        </button>
+                    </div>
+
+                    <!-- Prediction Results Card -->
+                    <div class="bg-card rounded-lg border border-border shadow-sm p-6">
+                        <h2 class="text-lg font-semibold text-foreground mb-4 flex items-center">
+                            <i class="fas fa-chart-line mr-2 text-primary"></i>
+                            Prediction Results
+                        </h2>
+                        
+                        <!-- Model Predictions -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                    <span class="font-medium text-sm">XGB + SVM</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-semibold text-foreground" data-bind="predictions.xgb_svm">Malignant</div>
+                                    <div class="text-xs text-muted-foreground">Confidence: 87.3%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <span class="font-medium text-sm">XGB + LR</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-semibold text-foreground" data-bind="predictions.xgb_lr">Malignant</div>
+                                    <div class="text-xs text-muted-foreground">Confidence: 92.1%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                    <span class="font-medium text-sm">XGB + RF</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-semibold text-foreground" data-bind="predictions.xgb_rf">Benign</div>
+                                    <div class="text-xs text-muted-foreground">Confidence: 78.9%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Consensus Prediction -->
+                        <div class="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-foreground">Consensus Prediction</span>
+                                <span class="text-lg font-bold text-primary" data-bind="consensus">Malignant</span>
+                            </div>
+                            <div class="text-sm text-muted-foreground mt-1">
+                                2/3 models agree • Review recommended
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: PredictionPanel -->
+
+                <!-- Model Comparison Panel -->
+                <!-- @COMPONENT: ModelComparisonPanel -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Performance Overview -->
+                    <div class="bg-card rounded-lg border border-border shadow-sm p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-semibold text-foreground flex items-center">
+                                <i class="fas fa-chart-bar mr-2 text-primary"></i>
+                                Model Performance Comparison
+                            </h2>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md" data-view="all">All Datasets</button>
+                                <button class="px-3 py-1 text-sm text-muted-foreground hover:text-foreground" data-view="breast">Breast</button>
+                                <button class="px-3 py-1 text-sm text-muted-foreground hover:text-foreground" data-view="gastric">Gastric</button>
+                                <button class="px-3 py-1 text-sm text-muted-foreground hover:text-foreground" data-view="lung">Lung</button>
+                            </div>
+                        </div>
+
+                        <!-- Metrics Overview Cards -->
+                        <div class="grid grid-cols-4 gap-4 mb-6">
+                            <div class="bg-muted p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-foreground" data-bind="metrics.avgAccuracy">94.2%</div>
+                                <div class="text-sm text-muted-foreground">Avg Accuracy</div>
+                            </div>
+                            <div class="bg-muted p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-foreground" data-bind="metrics.avgPrecision">91.8%</div>
+                                <div class="text-sm text-muted-foreground">Avg Precision</div>
+                            </div>
+                            <div class="bg-muted p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-foreground" data-bind="metrics.avgAUC">0.96</div>
+                                <div class="text-sm text-muted-foreground">Avg AUC</div>
+                            </div>
+                            <div class="bg-muted p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-foreground" data-bind="metrics.avgKappa">0.88</div>
+                                <div class="text-sm text-muted-foreground">Avg Kappa</div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Chart -->
+                        <div class="chart-container mb-6">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Metrics Table -->
+                    <div class="bg-card rounded-lg border border-border shadow-sm p-6">
+                        <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center">
+                            <i class="fas fa-table mr-2 text-primary"></i>
+                            Detailed Model Metrics
+                        </h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-muted">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium text-foreground">Dataset</th>
+                                        <th class="px-4 py-3 text-left font-medium text-foreground">Model</th>
+                                        <th class="px-4 py-3 text-center font-medium text-foreground">Accuracy</th>
+                                        <th class="px-4 py-3 text-center font-medium text-foreground">Precision</th>
+                                        <th class="px-4 py-3 text-center font-medium text-foreground">AUC</th>
+                                        <th class="px-4 py-3 text-center font-medium text-foreground">Kappa</th>
+                                        <th class="px-4 py-3 text-center font-medium text-foreground">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-border" data-bind="metricsTable">
+                                    <!-- @MAP: datasets.map(dataset => dataset.models.map(model => ( -->
+                                    <tr class="hover:bg-muted/50">
+                                        <td class="px-4 py-3 font-medium">Breast Cancer</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                <span>XGB + SVM</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium">96.8%</td>
+                                        <td class="px-4 py-3 text-center">94.2%</td>
+                                        <td class="px-4 py-3 text-center">0.98</td>
+                                        <td class="px-4 py-3 text-center">0.92</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-muted/50">
+                                        <td class="px-4 py-3 font-medium">Breast Cancer</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <span>XGB + LR</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium">95.4%</td>
+                                        <td class="px-4 py-3 text-center">93.1%</td>
+                                        <td class="px-4 py-3 text-center">0.97</td>
+                                        <td class="px-4 py-3 text-center">0.89</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-muted/50">
+                                        <td class="px-4 py-3 font-medium">Breast Cancer</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                                <span>XGB + RF</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium">94.7%</td>
+                                        <td class="px-4 py-3 text-center">91.8%</td>
+                                        <td class="px-4 py-3 text-center">0.95</td>
+                                        <td class="px-4 py-3 text-center">0.87</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-muted/50">
+                                        <td class="px-4 py-3 font-medium">Gastric Cancer</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                <span>XGB + SVM</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium">92.1%</td>
+                                        <td class="px-4 py-3 text-center">89.4%</td>
+                                        <td class="px-4 py-3 text-center">0.94</td>
+                                        <td class="px-4 py-3 text-center">0.84</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-muted/50">
+                                        <td class="px-4 py-3 font-medium">Gastric Cancer</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <span>XGB + LR</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium">93.6%</td>
+                                        <td class="px-4 py-3 text-center">90.7%</td>
+                                        <td class="px-4 py-3 text-center">0.96</td>
+                                        <td class="px-4 py-3 text-center">0.87</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-muted/50">
+                                        <td class="px-4 py-3 font-medium">Gastric Cancer</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                                <span>XGB + RF</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium">91.3%</td>
+                                        <td class="px-4 py-3 text-center">88.2%</td>
+                                        <td class="px-4 py-3 text-center">0.93</td>
+                                        <td class="px-4 py-3 text-center">0.82</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-muted/50">
+                                        <td class="px-4 py-3 font-medium">Lung Cancer</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                <span>XGB + SVM</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium">89.7%</td>
+                                        <td class="px-4 py-3 text-center">86.3%</td>
+                                        <td class="px-4 py-3 text-center">0.92</td>
+                                        <td class="px-4 py-3 text-center">0.79</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-muted/50">
+                                        <td class="px-4 py-3 font-medium">Lung Cancer</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <span>XGB + LR</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium">91.2%</td>
+                                        <td class="px-4 py-3 text-center">88.9%</td>
+                                        <td class="px-4 py-3 text-center">0.94</td>
+                                        <td class="px-4 py-3 text-center">0.82</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-muted/50">
+                                        <td class="px-4 py-3 font-medium">Lung Cancer</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                                <span>XGB + RF</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-medium">90.4%</td>
+                                        <td class="px-4 py-3 text-center">87.1%</td>
+                                        <td class="px-4 py-3 text-center">0.91</td>
+                                        <td class="px-4 py-3 text-center">0.80</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ROC Curves Section -->
+                    <div class="bg-card rounded-lg border border-border shadow-sm p-6">
+                        <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center">
+                            <i class="fas fa-chart-area mr-2 text-primary"></i>
+                            ROC Curves by Dataset
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Breast Cancer ROC -->
+                            <div class="text-center">
+                                <h4 class="font-medium text-foreground mb-2">Breast Cancer</h4>
+                                <div class="chart-container h-48">
+                                    <canvas id="rocBreast"></canvas>
+                                </div>
+                            </div>
+                            
+                            <!-- Gastric Cancer ROC -->
+                            <div class="text-center">
+                                <h4 class="font-medium text-foreground mb-2">Gastric Cancer</h4>
+                                <div class="chart-container h-48">
+                                    <canvas id="rocGastric"></canvas>
+                                </div>
+                            </div>
+                            
+                            <!-- Lung Cancer ROC -->
+                            <div class="text-center">
+                                <h4 class="font-medium text-foreground mb-2">Lung Cancer</h4>
+                                <div class="chart-container h-48">
+                                    <canvas id="rocLung"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ModelComparisonPanel -->
+            </div>
+        </main>
+    </div>
+    <!-- @END_COMPONENT: AppLayout -->
+
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        
+        (function() {
+            // Tab switching functionality
+            const tabButtons = document.querySelectorAll('[data-tab]');
+            const manualInput = document.getElementById('manual-input');
+            const csvInput = document.getElementById('csv-input');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tab = this.getAttribute('data-tab');
+                    
+                    // Update active states
+                    tabButtons.forEach(btn => {
+                        btn.className = btn === this 
+                            ? 'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-background text-foreground shadow-sm'
+                            : 'flex-1 px-3 py-2 text-sm font-medium rounded-md text-muted-foreground hover:text-foreground';
+                    });
+                    
+                    // Show/hide content
+                    if (tab === 'manual') {
+                        manualInput.classList.remove('hidden');
+                        csvInput.classList.add('hidden');
+                    } else {
+                        manualInput.classList.add('hidden');
+                        csvInput.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Dataset view filtering
+            const viewButtons = document.querySelectorAll('[data-view]');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const view = this.getAttribute('data-view');
+                    
+                    // Update active states
+                    viewButtons.forEach(btn => {
+                        btn.className = btn === this 
+                            ? 'px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md'
+                            : 'px-3 py-1 text-sm text-muted-foreground hover:text-foreground';
+                    });
+                    
+                    // TODO: Filter table and charts based on selected view
+                    console.log('Filtering by:', view);
+                });
+            });
+
+            // Initialize performance comparison chart
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Breast Cancer', 'Gastric Cancer', 'Lung Cancer'],
+                    datasets: [
+                        {
+                            label: 'XGB + SVM',
+                            data: [96.8, 92.1, 89.7],
+                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'XGB + LR',
+                            data: [95.4, 93.6, 91.2],
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'XGB + RF',
+                            data: [94.7, 91.3, 90.4],
+                            backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                            borderColor: 'rgba(168, 85, 247, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Model Accuracy Comparison by Dataset (%)'
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Initialize ROC curves (mock data)
+            function createROCChart(canvasId, title) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                return new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 11}, (_, i) => (i * 0.1).toFixed(1)),
+                        datasets: [
+                            {
+                                label: 'XGB + SVM',
+                                data: [0, 0.1, 0.3, 0.5, 0.7, 0.8, 0.85, 0.9, 0.95, 0.98, 1.0],
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'XGB + LR',
+                                data: [0, 0.05, 0.25, 0.45, 0.65, 0.75, 0.82, 0.88, 0.93, 0.97, 1.0],
+                                borderColor: 'rgba(16, 185, 129, 1)',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'XGB + RF',
+                                data: [0, 0.08, 0.28, 0.48, 0.68, 0.78, 0.84, 0.89, 0.94, 0.96, 1.0],
+                                borderColor: 'rgba(168, 85, 247, 1)',
+                                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'False Positive Rate'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'True Positive Rate'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createROCChart('rocBreast', 'Breast Cancer ROC');
+            createROCChart('rocGastric', 'Gastric Cancer ROC');
+            createROCChart('rocLung', 'Lung Cancer ROC');
+
+            // TODO: Add prediction functionality
+            // TODO: Add CSV upload handling
+            // TODO: Add API integration with axios
+            // TODO: Add real-time metric updates
+            // TODO: Add error handling and loading states
+            
+        })();
+    </script>
+</body>
+</html>
