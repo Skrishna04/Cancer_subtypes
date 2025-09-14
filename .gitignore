@@ -4,3 +4,24 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# Dependencies
+node_modules/
+.local/
+.replit
+
+# Build outputs
+dist/
+build/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS files
+.DS_Store
+Thumbs.db
+Cancer-Subtype_classification/
+
