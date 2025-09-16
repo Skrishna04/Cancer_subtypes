@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { CancerDataset, PredictionResponse, PredictionInput } from "@shared/schema";
@@ -14,17 +12,10 @@ interface PredictionPanelProps {
 
 export function PredictionPanel({ selectedDataset }: PredictionPanelProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   
-  const [features, setFeatures] = useState<Record<string, number>>({
+  // Simplified features - only keeping mean_radius
+  const [features] = useState<Record<string, number>>({
     mean_radius: 14.127,
-    mean_texture: 19.289,
-    mean_perimeter: 91.969,
-    mean_area: 654.889,
-    mean_smoothness: 0.096,
-    mean_compactness: 0.104,
-    mean_concavity: 0.089,
-    mean_concave_points: 0.048,
   });
 
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -83,13 +74,6 @@ export function PredictionPanel({ selectedDataset }: PredictionPanelProps) {
     },
   });
 
-  const handleFeatureChange = (key: string, value: string) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue)) {
-      setFeatures(prev => ({ ...prev, [key]: numValue }));
-    }
-  };
-
   const handlePredict = () => {
     predictionMutation.mutate({
       dataset: selectedDataset,
@@ -114,42 +98,31 @@ export function PredictionPanel({ selectedDataset }: PredictionPanelProps) {
           <i className="fas fa-calculator text-primary mr-2"></i>
           Model Predictions
         </h2>
-        <p className="text-sm text-muted-foreground">Enter patient features to get predictions from all models</p>
+        <p className="text-sm text-muted-foreground">Get AI-powered predictions from all models</p>
       </CardHeader>
       
       <CardContent className="p-6">
-        {/* Feature Input Form */}
+        {/* AI Prediction Tool */}
         <div className="space-y-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(features).map(([key, value]) => (
-              <div key={key}>
-                <Label className="block text-sm font-medium text-foreground mb-2">
-                  {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </Label>
-                <Input
-                  type="number"
-                  data-testid={`input-${key}`}
-                  value={value}
-                  onChange={(e) => handleFeatureChange(key, e.target.value)}
-                  step="0.001"
-                  className="w-full"
-                />
-              </div>
-            ))}
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Click the button below to get predictions using our AI models
+            </p>
+            
+            <Button
+              data-testid="button-predict"
+              onClick={handlePredict}
+              disabled={predictionMutation.isPending}
+              className="w-full"
+              size="lg"
+            >
+              <i className="fas fa-brain mr-2"></i>
+              {predictionMutation.isPending ? "Predicting..." : "Predict with AI Tool"}
+            </Button>
           </div>
-          
-          <Button
-            data-testid="button-predict"
-            onClick={handlePredict}
-            disabled={predictionMutation.isPending}
-            className="w-full"
-          >
-            <i className="fas fa-brain mr-2"></i>
-            {predictionMutation.isPending ? "Predicting..." : "Predict with All Models"}
-          </Button>
         </div>
 
-        {/* CSV Upload Section - Moved Lower */}
+        {/* CSV Upload Section */}
         <div className="border-t border-border pt-6">
           <h3 className="text-md font-medium text-foreground mb-4">Batch Processing</h3>
           <div className="relative">
