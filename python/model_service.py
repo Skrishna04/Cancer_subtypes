@@ -1,23 +1,44 @@
 #!/usr/bin/env python3
 """
-Model Service for Cancer Classification
-Handles model loading and prediction serving
+Enhanced Model Service for Cancer Classification
+Handles model loading, prediction serving, and CSV comparison
 """
 
 import joblib
 import numpy as np
 import pandas as pd
 import os
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional
 import warnings
 warnings.filterwarnings('ignore')
 
 class CancerModelService:
-    """Service class for managing cancer classification models"""
+    """Enhanced service class for managing cancer classification models with CSV comparison"""
     
     def __init__(self, models_dir: str = 'models'):
         self.models_dir = models_dir
         self.models = {}
+        self.dataset_info = {
+            'breast': {
+                'name': 'Breast Cancer',
+                'features': ['mean_radius', 'mean_texture', 'mean_perimeter', 'mean_area', 
+                           'mean_smoothness', 'mean_compactness', 'mean_concavity', 'mean_concave_points'],
+                'type': 'clinical',
+                'target_column': 'diagnosis'
+            },
+            'gastric': {
+                'name': 'Gastric Cancer',
+                'features': None,  # Gene expression - dynamic features
+                'type': 'gene_expression',
+                'target_column': 'Sample_Characteristics'
+            },
+            'lung': {
+                'name': 'Lung Cancer', 
+                'features': None,  # Gene expression - dynamic features
+                'type': 'gene_expression',
+                'target_column': 'classes'
+            }
+        }
         self.load_all_models()
     
     def load_all_models(self):
@@ -52,8 +73,8 @@ class CancerModelService:
         from sklearn.linear_model import LogisticRegression
         
         mock_model = {
-            'xgb_model': LogisticRegression(random_state=42, max_iter=10),  # Ultra-fast linear model
-            'meta_model': LogisticRegression(random_state=42, max_iter=10),  # Ultra-fast linear model
+            'xgb_model': LogisticRegression(random_state=42, max_iter=10),
+            'meta_model': LogisticRegression(random_state=42, max_iter=10),
             'scaler': StandardScaler(),
             'metrics': {
                 'accuracy': 0.85,
@@ -64,7 +85,7 @@ class CancerModelService:
         }
         
         # Fit with minimal dummy data for fastest training
-        dummy_X = np.random.randn(20, 8)  # Use 8 features to match common CSV format
+        dummy_X = np.random.randn(20, 8)
         dummy_y = np.random.randint(0, 2, 20)
         mock_model['scaler'].fit(dummy_X)
         mock_model['xgb_model'].fit(dummy_X, dummy_y)
@@ -86,24 +107,33 @@ class CancerModelService:
                 continue
                 
             try:
-                # Ultra-fast feature adjustment - always use 8 features
-                if feature_array.shape[1] >= 8:
-                    feature_array_adjusted = feature_array[:, :8]  # Take first 8 features
+                # Handle different feature dimensions based on dataset type
+                if self.dataset_info[dataset]['type'] == 'clinical':
+                    # Clinical features - use first 8 features
+                    if feature_array.shape[1] >= 8:
+                        feature_array_adjusted = feature_array[:, :8]
+                    else:
+                        padding = np.zeros((1, 8 - feature_array.shape[1]))
+                        feature_array_adjusted = np.hstack([feature_array, padding])
                 else:
-                    # Pad with zeros to make 8 features
-                    padding = np.zeros((1, 8 - feature_array.shape[1]))
-                    feature_array_adjusted = np.hstack([feature_array, padding])
+                    # Gene expression - use all features or pad/truncate as needed
+                    target_features = 1000  # Adjust based on your gene expression model
+                    if feature_array.shape[1] >= target_features:
+                        feature_array_adjusted = feature_array[:, :target_features]
+                    else:
+                        padding = np.zeros((1, target_features - feature_array.shape[1]))
+                        feature_array_adjusted = np.hstack([feature_array, padding])
                 
                 # Scale features
                 feature_array_scaled = model['scaler'].transform(feature_array_adjusted)
                 
-                # Get ultra-fast linear prediction
+                # Get prediction
                 xgb_pred = model['xgb_model'].predict_proba(feature_array_scaled)[:, 1]
                 
                 # Combine with original features for meta-learner
                 meta_features = np.hstack([feature_array_scaled, xgb_pred.reshape(-1, 1)])
                 
-                # Get final ultra-fast prediction
+                # Get final prediction
                 prediction = model['meta_model'].predict(meta_features)[0]
                 probability = model['meta_model'].predict_proba(meta_features)[0, 1]
                 
@@ -114,7 +144,7 @@ class CancerModelService:
                 }
                 
             except Exception as e:
-                # Ultra-fast error handling - return default prediction
+                print(f"Error in prediction for {model_type}: {e}")
                 predictions[model_type] = {
                     'prediction': 0,
                     'probability': 0.5,
@@ -123,116 +153,37 @@ class CancerModelService:
         
         return predictions
     
-    def predict_batch(self, dataset: str, features_list: List[Dict[str, float]]) -> List[Dict[str, Any]]:
-        """Make predictions for multiple samples"""
-        results = []
-        for i, features in enumerate(features_list):
-            try:
-                predictions = self.predict_single(dataset, features)
-                results.append({
-                    'row': i + 1,
-                    'predictions': predictions,
-                    'success': True
-                })
-            except Exception as e:
-                results.append({
-                    'row': i + 1,
-                    'predictions': {},
-                    'success': False,
-                    'error': str(e)
-                })
-        
-        return results
-    
-    def get_model_metrics(self, dataset: str = None) -> Dict[str, Any]:
-        """Get stored model metrics"""
-        metrics = []
-        
-        datasets_to_check = [dataset] if dataset else self.models.keys()
-        
-        for ds in datasets_to_check:
-            if ds not in self.models:
-                continue
-                
-            for model_type, model in self.models[ds].items():
-                if model is None:
-                    continue
-                
-                # Get metrics from model or use defaults
-                if 'metrics' in model:
-                    model_metrics = model['metrics'].copy()
-                else:
-                    model_metrics = {
-                        'accuracy': 0.85,
-                        'precision': 0.82,
-                        'auc': 0.88,
-                        'kappa': 0.70
-                    }
-                
-                model_metrics['dataset'] = ds
-                model_metrics['model'] = model_type
-                metrics.append(model_metrics)
-        
-        return {'metrics': metrics}
-    
-    def health_check(self) -> Dict[str, Any]:
-        """Check if all models are loaded properly"""
-        status = {}
-        total_models = 0
-        loaded_models = 0
-        
-        for dataset, models in self.models.items():
-            status[dataset] = {}
-            for model_type, model in models.items():
-                is_loaded = model is not None
-                status[dataset][model_type] = is_loaded
-                total_models += 1
-                if is_loaded:
-                    loaded_models += 1
-        
-        return {
-            'status': 'healthy' if loaded_models == total_models else 'partial',
-            'loaded_models': loaded_models,
-            'total_models': total_models,
-            'details': status
-        }
-
-# Global model service instance
-model_service = None
-
-def get_model_service() -> CancerModelService:
-    """Get global model service instance"""
-    global model_service
-    if model_service is None:
-        model_service = CancerModelService()
-    return model_service
-
-if __name__ == "__main__":
-    # Test the model service
-    service = CancerModelService()
-    
-    # Health check
-    health = service.health_check()
-    print("Health check:", health)
-    
-    # Test prediction
-    test_features = {
-        'feature_1': 14.127,
-        'feature_2': 19.289,
-        'feature_3': 91.969,
-        'feature_4': 654.889,
-        'feature_5': 0.096,
-        'feature_6': 0.104,
-        'feature_7': 0.089,
-        'feature_8': 0.048
-    }
-    
-    try:
-        predictions = service.predict_single('breast', test_features)
-        print("Test predictions:", predictions)
-    except Exception as e:
-        print("Test prediction failed:", e)
-    
-    # Get metrics
-    metrics = service.get_model_metrics()
-    print("Model metrics:", metrics)
+    def compare_csv_with_datasets(self, csv_file_path: str) -> Dict[str, Any]:
+        """Compare uploaded CSV with all available datasets"""
+        try:
+            # Load CSV file
+            df = pd.read_csv(csv_file_path)
+            
+            # Get basic info about the CSV
+            csv_info = {
+                'filename': os.path.basename(csv_file_path),
+                'rows': len(df),
+                'columns': list(df.columns),
+                'column_count': len(df.columns),
+                'has_target': False,
+                'target_column': None,
+                'suggested_datasets': []
+            }
+            
+            # Check for target column
+            target_candidates = ['classes', 'Sample_Characteristics', 'target', 'label', 'diagnosis']
+            for col in target_candidates:
+                if col in df.columns:
+                    csv_info['has_target'] = True
+                    csv_info['target_column'] = col
+                    break
+            
+            # Analyze features and suggest compatible datasets
+            feature_count = len(df.columns) - (1 if csv_info['has_target'] else 0)
+            
+            if feature_count <= 10:
+                csv_info['suggested_datasets'].append('breast')
+            if feature_count > 100:
+                csv_info['suggested_datasets'].extend(['gastric', 'lung'])
+            
+            # If no s

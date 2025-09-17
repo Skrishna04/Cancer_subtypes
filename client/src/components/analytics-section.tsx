@@ -12,7 +12,9 @@ export function AnalyticsSection({ selectedDataset }: AnalyticsSectionProps) {
   });
 
   const getBestModel = () => {
-    if (!metricsData) return null;
+    if (!metricsData || !metricsData.metrics || metricsData.metrics.length === 0) {
+      return null;
+    }
     
     const allMetrics = metricsData.metrics;
     const bestModel = allMetrics.reduce((best, current) => 
