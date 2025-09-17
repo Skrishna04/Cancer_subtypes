@@ -26,9 +26,9 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
     if (metrics.length === 0) {
       // Return mock data if no metrics available
       return [
-        { model: "XGB+SVM", Accuracy: 0.85, Precision: 0.82, AUC: 0.88, Kappa: 0.70 },
-        { model: "XGB+LR", Accuracy: 0.87, Precision: 0.84, AUC: 0.90, Kappa: 0.74 },
-        { model: "XGB+RF", Accuracy: 0.86, Precision: 0.83, AUC: 0.89, Kappa: 0.72 },
+        { model: "XGB+SVM", Accuracy: 0.996, Precision: 0.986, AUC: 0.939, Kappa: 0.917 },
+        { model: "XGB+LR", Accuracy: 0.991, Precision: 0.918, AUC: 0.998, Kappa: 0.953 },
+        { model: "XGB+RF", Accuracy: 0.983, Precision: 0.937, AUC: 0.996, Kappa: 0.900 },
       ];
     }
     return metrics.map(m => ({
