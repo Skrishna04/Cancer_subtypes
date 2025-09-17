@@ -1,47 +1,32 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
-// Swap storage backend to Python-powered service
-import { storage } from "./storage.python";
-import { predictionInputSchema, csvUploadSchema, type CancerDataset } from "@shared/schema";
+import { Express } from "express";
 import multer from "multer";
-import csv from "csv-parser";
 import { Readable } from "stream";
+import csv from "csv-parser";
+import { predictionInputSchema, batchPredictionResponseSchema } from "@shared/schema";
+import { storage } from "./storage";
 
-const upload = multer({ 
+const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { 
-    fileSize: 500 * 1024 * 1024, // up to 500MB CSV
-    fieldSize: 500 * 1024 * 1024, // up to 500MB field size
-    fieldNameSize: 1000, // up to 1000 characters for field names
-    fields: 100, // up to 100 fields
+  limits: {
+    fileSize: 1024 * 1024 * 1024, // 1GB limit (1024MB)
     files: 1, // only 1 file
   },
 });
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  
-  // Get all model metrics
-  app.get("/api/metrics", async (req, res) => {
-    try {
-      const metrics = await storage.getModelMetrics();
-      res.json({ metrics });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve metrics" });
-    }
+export async function registerRoutes(app: Express): Promise<void> {
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "healthy", timestamp: new Date().toISOString() });
   });
 
-  // Get metrics for specific dataset
-  app.get("/api/metrics/:dataset", async (req, res) => {
+  // Get model metrics
+  app.get("/api/metrics", async (req, res) => {
     try {
-      const dataset = req.params.dataset as CancerDataset;
-      if (!["breast", "gastric", "lung"].includes(dataset)) {
-        return res.status(400).json({ message: "Invalid dataset" });
-      }
-      
+      const dataset = req.query.dataset as string;
       const metrics = await storage.getModelMetricsByDataset(dataset);
       res.json({ metrics });
     } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve dataset metrics" });
+      res.status(500).json({ message: "Failed to fetch metrics" });
     }
   });
 
@@ -67,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const dataset = req.body.dataset as CancerDataset;
+      const dataset = req.body.dataset as string;
       if (!["breast", "gastric", "lung"].includes(dataset)) {
         return res.status(400).json({ message: "Invalid dataset" });
       }
@@ -79,86 +64,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stream = Readable.from(cleaned);
       
       let rowIndex = 0;
-      const BATCH_SIZE = 500; // Process 500 rows at a time for maximum speed
+      const BATCH_SIZE = 1000; // Increased batch size for better performance
       let currentBatch: Record<string, number>[] = [];
       
       await new Promise((resolve, reject) => {
         stream
           .pipe(csv())
-          .on("data", async (row) => {
-            // Convert string values to numbers
-            const numericRow: Record<string, number> = {};
-            for (const [key, value] of Object.entries(row)) {
-              const numValue = parseFloat(value as string);
-              if (!isNaN(numValue)) {
-                numericRow[key] = numValue;
+          .on("data", (row) => {
+            // Convert row to features (remove any target columns)
+            const features: Record<string, number> = {};
+            Object.entries(row).forEach(([key, value]) => {
+              // Skip common target column names
+              if (!["classes", "Sample_Characteristics", "target", "label", "diagnosis"].includes(key)) {
+                const numValue = parseFloat(value as string);
+                if (!isNaN(numValue)) {
+                  features[key] = numValue;
+                }
               }
+            });
+            
+            if (Object.keys(features).length > 0) {
+              currentBatch.push(features);
             }
             
-            currentBatch.push(numericRow);
-            rowIndex++;
-            
-            // Process batch when it reaches BATCH_SIZE
             if (currentBatch.length >= BATCH_SIZE) {
-              try {
-                const batchResults = await storage.batchPredict(dataset, currentBatch);
-                results.push(...batchResults.results);
-                currentBatch = []; // Clear batch to free memory
-              } catch (error) {
-                console.error("Batch processing error:", error);
-                // Add error results for this batch
-                for (let i = 0; i < currentBatch.length; i++) {
+              // Process batch
+              currentBatch.forEach((features, batchIndex) => {
+                const globalIndex = rowIndex - currentBatch.length + batchIndex;
+                try {
+                  const prediction = storage.predict({
+                    dataset: dataset as any,
+                    features
+                  });
+                  
                   results.push({
-                    row: rowIndex - currentBatch.length + i + 1,
-                    features: Object.values(currentBatch[i]),
-                    error: error instanceof Error ? error.message : "Prediction failed",
+                    row: globalIndex,
+                    predictions: prediction.predictions,
+                    consensus: prediction.consensus
+                  });
+                } catch (error) {
+                  results.push({
+                    row: globalIndex,
+                    error: error instanceof Error ? error.message : "Unknown error",
+                    features
                   });
                 }
-                currentBatch = [];
-              }
+              });
+              
+              currentBatch = [];
             }
+            
+            rowIndex++;
           })
-          .on("end", async () => {
-            // Process remaining rows
-            if (currentBatch.length > 0) {
+          .on("end", () => {
+            // Process remaining batch
+            currentBatch.forEach((features, batchIndex) => {
+              const globalIndex = rowIndex - currentBatch.length + batchIndex;
               try {
-                const batchResults = await storage.batchPredict(dataset, currentBatch);
-                results.push(...batchResults.results);
+                const prediction = storage.predict({
+                  dataset: dataset as any,
+                  features
+                });
+                
+                results.push({
+                  row: globalIndex,
+                  predictions: prediction.predictions,
+                  consensus: prediction.consensus
+                });
               } catch (error) {
-                console.error("Final batch processing error:", error);
-                // Add error results for remaining rows
-                for (let i = 0; i < currentBatch.length; i++) {
-                  results.push({
-                    row: rowIndex - currentBatch.length + i + 1,
-                    features: Object.values(currentBatch[i]),
-                    error: error instanceof Error ? error.message : "Prediction failed",
-                  });
-                }
+                results.push({
+                  row: globalIndex,
+                  error: error instanceof Error ? error.message : "Unknown error",
+                  features
+                });
               }
-            }
+            });
+            
             resolve(undefined);
           })
           .on("error", reject);
       });
 
-      if (results.length === 0) {
-        return res.status(400).json({ message: "No valid data found in CSV" });
-      }
-
-      res.json({
+      const response = {
         dataset,
-        results,
-      });
+        results: results.slice(0, 5000), // Increased limit to 5000 results
+        total_processed: results.length
+      };
 
+      res.json(response);
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "Batch prediction failed" });
-      }
+      console.error("Batch prediction error:", error);
+      res.status(500).json({ 
+        message: "Batch prediction failed", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
+  // New CSV analysis endpoint
+  app.post("/api/analyze-csv", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Basic CSV analysis
+      const raw = req.file.buffer.toString("utf8");
+      const cleaned = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+      const lines = cleaned.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        return res.status(400).json({ message: "CSV file must have at least a header and one data row" });
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const dataRows = lines.length - 1;
+      
+      // Check for target columns
+      const targetCandidates = ['classes', 'Sample_Characteristics', 'target', 'label', 'diagnosis'];
+      const targetColumn = targetCandidates.find(col => headers.includes(col));
+      
+      // Suggest datasets based on feature count
+      const featureCount = headers.length - (targetColumn ? 1 : 0);
+      const suggestedDatasets = [];
+      
+      if (featureCount <= 10) {
+        suggestedDatasets.push('breast');
+      }
+      if (featureCount > 100) {
+        suggestedDatasets.push('gastric', 'lung');
+      }
+      if (suggestedDatasets.length === 0) {
+        suggestedDatasets.push('breast', 'gastric', 'lung');
+      }
+
+      res.json({
+        filename: req.file.originalname,
+        rows: dataRows,
+        columns: headers,
+        column_count: headers.length,
+        has_target: !!targetColumn,
+        target_column: targetColumn,
+        suggested_datasets: suggestedDatasets
+      });
+    } catch (error) {
+      console.error("CSV analysis error:", error);
+      res.status(500).json({ 
+        message: "CSV analysis failed", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
 }

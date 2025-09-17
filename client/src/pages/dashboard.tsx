@@ -3,6 +3,7 @@ import { DatasetSelector } from "@/components/dataset-selector";
 import { PredictionPanel } from "@/components/prediction-panel";
 import { ModelComparisonPanel } from "@/components/model-comparison-panel";
 import { AnalyticsSection } from "@/components/analytics-section";
+import { CsvAnalysisPanel } from "@/components/csv-analysis-panel";
 import type { CancerDataset } from "@shared/schema";
 
 export default function Dashboard() {
@@ -35,6 +36,14 @@ export default function Dashboard() {
           selectedDataset={selectedDataset}
           onDatasetChange={setSelectedDataset}
         />
+
+        {/* CSV Analysis Panel - New */}
+        <div className="mb-8">
+          <CsvAnalysisPanel 
+            selectedDataset={selectedDataset}
+            onDatasetChange={setSelectedDataset}
+          />
+        </div>
 
         {/* Main Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
