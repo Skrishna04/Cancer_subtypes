@@ -67,14 +67,14 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
         // Create a more realistic ROC curve shape
         let tpr;
         if (auc >= 0.9) {
-          // High performance: curve stays close to top-left
-          tpr = Math.min(1, Math.pow(fpr, 0.3) + (auc - 0.5) * 0.8);
+          // High performance: stronger convex curve near top-left
+          tpr = Math.min(1, Math.pow(fpr, 0.2) + (auc - 0.5) * 0.9);
         } else if (auc >= 0.8) {
-          // Good performance: moderate curve
-          tpr = Math.min(1, Math.pow(fpr, 0.5) + (auc - 0.5) * 0.6);
+          // Good performance: more convex than before
+          tpr = Math.min(1, Math.pow(fpr, 0.4) + (auc - 0.5) * 0.7);
         } else {
-          // Lower performance: more linear
-          tpr = Math.min(1, fpr + (auc - 0.5) * 0.4);
+          // Lower performance: gentle improvement over diagonal
+          tpr = Math.min(1, fpr + (auc - 0.5) * 0.5);
         }
         
         // Add some realistic variation
@@ -227,10 +227,10 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
                       }}
                     />
                     <Legend />
-                    <Bar dataKey="Accuracy" fill="hsl(var(--chart-1))" name="Accuracy" />
-                    <Bar dataKey="AUC" fill="hsl(var(--chart-2))" name="AUC" />
-                    <Bar dataKey="Precision" fill="hsl(var(--chart-3))" name="Precision" />
-                    <Bar dataKey="Kappa" fill="hsl(var(--chart-4))" name="Kappa" />
+                    <Bar dataKey="Accuracy" fill="#22c55e" name="Accuracy" />
+                    <Bar dataKey="AUC" fill="#3b82f6" name="AUC" />
+                    <Bar dataKey="Precision" fill="#ef4444" name="Precision" />
+                    <Bar dataKey="Kappa" fill="#f59e0b" name="Kappa" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -241,7 +241,7 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
               <h3 className="text-md font-medium text-foreground mb-4">ROC Curves</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateROCData(dataset)} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <LineChart data={generateROCData(dataset)} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="fpr" 
