@@ -13,12 +13,46 @@ interface PredictionPanelProps {
 export function PredictionPanel({ selectedDataset }: PredictionPanelProps) {
   const { toast } = useToast();
   
-  // Simplified features - only keeping mean_radius
-  const [features] = useState<Record<string, number>>({
-    mean_radius: 14.127,
-  });
+  // Test cases with different feature values to show both benign and malignant predictions
+  const [testCases, setTestCases] = useState([
+    {
+      name: "Benign Case",
+      features: { mean_radius: 10.5, mean_texture: 15.2, mean_perimeter: 65.1 },
+      description: "Low feature values → Benign"
+    },
+    {
+      name: "Malignant Case", 
+      features: { mean_radius: 25.8, mean_texture: 28.4, mean_perimeter: 180.2 },
+      description: "High feature values → Malignant"
+    },
+    {
+      name: "Borderline Case",
+      features: { mean_radius: 18.3, mean_texture: 22.1, mean_perimeter: 120.5 },
+      description: "Medium feature values → Mixed predictions"
+    }
+  ]);
 
+  const [selectedTestCase, setSelectedTestCase] = useState(0);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+
+  const generateRandomTest = () => {
+    const randomFeatures = {
+      mean_radius: Math.random() * 30 + 5, // 5-35
+      mean_texture: Math.random() * 30 + 10, // 10-40  
+      mean_perimeter: Math.random() * 200 + 50, // 50-250
+    };
+    
+    const avg = (randomFeatures.mean_radius + randomFeatures.mean_texture + randomFeatures.mean_perimeter) / 3;
+    
+    // Add as a new test case
+    setTestCases(prev => [...prev, {
+      name: "Random Test",
+      features: randomFeatures,
+      description: `Random values (avg: ${avg.toFixed(1)})`
+    }]);
+    
+    setSelectedTestCase(testCases.length);
+  };
 
   const predictionMutation = useMutation({
     mutationFn: async (input: PredictionInput) => {
@@ -77,7 +111,7 @@ export function PredictionPanel({ selectedDataset }: PredictionPanelProps) {
   const handlePredict = () => {
     predictionMutation.mutate({
       dataset: selectedDataset,
-      features
+      features: testCases[selectedTestCase].features
     });
   };
 
@@ -106,8 +140,54 @@ export function PredictionPanel({ selectedDataset }: PredictionPanelProps) {
         <div className="space-y-4 mb-6">
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-4">
-              Click the button below to get predictions using our AI models
+              Select a test case and click the button below to get predictions using our AI models
             </p>
+            
+            {/* Test Case Selection */}
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text-sm font-medium text-foreground">Test Cases:</h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={generateRandomTest}
+                  className="text-xs"
+                >
+                  <i className="fas fa-dice mr-1"></i>
+                  Random Test
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {testCases.map((testCase, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedTestCase(index)}
+                    className={`p-3 rounded-lg border text-left transition-colors ${
+                      selectedTestCase === index
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{testCase.name}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {testCase.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Feature Values Display */}
+            <div className="mb-4 p-3 bg-muted rounded-lg">
+              <h4 className="text-sm font-medium text-foreground mb-2">
+                Current Test Case: {testCases[selectedTestCase].name}
+              </h4>
+              <div className="text-xs text-muted-foreground">
+                Features: {Object.entries(testCases[selectedTestCase].features)
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join(', ')}
+              </div>
+            </div>
             
             <Button
               data-testid="button-predict"

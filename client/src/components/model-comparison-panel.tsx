@@ -45,9 +45,9 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
     
     // Use mock data if no metrics available
     const mockMetrics = [
-      { model: "xgb_svm", auc: 0.88 },
-      { model: "xgb_lr", auc: 0.90 },
-      { model: "xgb_rf", auc: 0.89 },
+      { model: "xgb_svm", auc: 0.996 },
+      { model: "xgb_lr", auc: 0.991 },
+      { model: "xgb_rf", auc: 0.983 },
     ];
     
     const dataToUse = metrics.length > 0 ? metrics : mockMetrics;
