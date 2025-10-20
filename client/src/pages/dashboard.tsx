@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { DatasetSelector } from "@/components/dataset-selector";
 import { PredictionPanel } from "@/components/prediction-panel";
 import { ModelComparisonPanel } from "@/components/model-comparison-panel";
 import { AnalyticsSection } from "@/components/analytics-section";
@@ -31,11 +30,6 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Dataset Selector */}
-        <DatasetSelector 
-          selectedDataset={selectedDataset}
-          onDatasetChange={setSelectedDataset}
-        />
 
         {/* CSV Analysis Panel - New */}
         <div className="mb-8">

@@ -43,51 +43,56 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
   const generateROCData = (dataset: CancerDataset) => {
     const metrics = getDatasetMetrics(dataset);
     
-    // Use mock data if no metrics available - match the table values
+    // Use mock data if no metrics available
     const mockMetrics = [
-      { model: "xgb_svm", auc: 0.939 },
-      { model: "xgb_lr", auc: 0.998 },
-      { model: "xgb_rf", auc: 0.996 },
+      { model: "xgb_svm", auc: 0.996 },
+      { model: "xgb_lr", auc: 0.991 },
+      { model: "xgb_rf", auc: 0.983 },
     ];
     
     const dataToUse = metrics.length > 0 ? metrics : mockMetrics;
     
-    // Generate smooth ROC curves based on AUC values
+    // Generate more realistic ROC curve data points
     const generateROCCurve = (auc: number) => {
       const points = [];
-      const numPoints = 21; // 0 to 1 in steps of 0.05
       
-      for (let i = 0; i < numPoints; i++) {
+      // Always start at (0,0) and end at (1,1)
+      points.push({ fpr: 0, tpr: 0 });
+      
+      // Generate intermediate points based on AUC
+      const numPoints = 20;
+      for (let i = 1; i < numPoints; i++) {
         const fpr = i / (numPoints - 1);
         
-        // Create smooth ROC curve based on AUC
-        // Higher AUC = more convex curve (closer to top-left)
+        // Create a more realistic ROC curve shape
         let tpr;
-        if (auc >= 0.95) {
-          // Excellent performance: very convex
-          tpr = Math.min(1, Math.pow(fpr, 0.1) + (auc - 0.5) * 1.2);
-        } else if (auc >= 0.9) {
-          // Very good performance: convex
-          tpr = Math.min(1, Math.pow(fpr, 0.2) + (auc - 0.5) * 1.0);
+        if (auc >= 0.9) {
+          // High performance: stronger convex curve near top-left
+          tpr = Math.min(1, Math.pow(fpr, 0.2) + (auc - 0.5) * 0.9);
         } else if (auc >= 0.8) {
-          // Good performance: moderately convex
-          tpr = Math.min(1, Math.pow(fpr, 0.3) + (auc - 0.5) * 0.8);
+          // Good performance: more convex than before
+          tpr = Math.min(1, Math.pow(fpr, 0.4) + (auc - 0.5) * 0.7);
         } else {
-          // Lower performance: closer to diagonal
-          tpr = Math.min(1, Math.pow(fpr, 0.5) + (auc - 0.5) * 0.6);
+          // Lower performance: gentle improvement over diagonal
+          tpr = Math.min(1, fpr + (auc - 0.5) * 0.5);
         }
         
-        // Ensure TPR is within bounds
-        tpr = Math.max(0, Math.min(1, tpr));
+        // Add some realistic variation
+        const variation = (Math.random() - 0.5) * 0.05;
+        tpr = Math.max(0, Math.min(1, tpr + variation));
+        
         points.push({ fpr, tpr });
       }
+      
+      // Always end at (1,1)
+      points.push({ fpr: 1, tpr: 1 });
       
       return points;
     };
     
     // Generate ROC data for each model
     const rocData: any[] = [];
-    const maxPoints = 21; // 0 to 1 in steps of 0.05
+    const maxPoints = 22; // 0 to 1 in steps of 0.05
     
     for (let i = 0; i < maxPoints; i++) {
       const fpr = i / (maxPoints - 1);
@@ -236,7 +241,7 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
               <h3 className="text-md font-medium text-foreground mb-4">ROC Curves</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateROCData(dataset)} margin={{ top: 20, right: 30, left: 50, bottom: 60 }}>
+                  <LineChart data={generateROCData(dataset)} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="fpr" 
@@ -258,11 +263,7 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
                         borderRadius: '6px'
                       }}
                     />
-                    <Legend 
-                      verticalAlign="bottom" 
-                      height={36}
-                      wrapperStyle={{ paddingTop: '10px' }}
-                    />
+                    <Legend />
                     {/* Random classifier line (diagonal) */}
                     <Line 
                       type="monotone" 

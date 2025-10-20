@@ -53,24 +53,24 @@ export class MemStorage implements IStorage {
     const featureSum = Object.values(features).reduce((sum, val) => sum + val, 0);
     const featureAvg = featureSum / Object.values(features).length;
     
-    // Generate predictions for each model with slight variations
+    // Generate predictions for each model with confidence always above 95%
     const predictions = [
       {
         model: "xgb_svm" as ModelType,
         prediction: featureAvg > 50 ? 1 : 0,
-        probability: Math.min(0.99, Math.max(0.01, (featureAvg / 100) + Math.random() * 0.1)),
+        probability: Math.min(0.99, Math.max(0.95, 0.95 + Math.random() * 0.04)),
         label: featureAvg > 50 ? "Malignant" : "Benign"
       },
       {
         model: "xgb_lr" as ModelType,
         prediction: featureAvg > 45 ? 1 : 0,
-        probability: Math.min(0.99, Math.max(0.01, (featureAvg / 95) + Math.random() * 0.1)),
+        probability: Math.min(0.99, Math.max(0.95, 0.95 + Math.random() * 0.04)),
         label: featureAvg > 45 ? "Malignant" : "Benign"
       },
       {
         model: "xgb_rf" as ModelType,
         prediction: featureAvg > 48 ? 1 : 0,
-        probability: Math.min(0.99, Math.max(0.01, (featureAvg / 98) + Math.random() * 0.1)),
+        probability: Math.min(0.99, Math.max(0.95, 0.95 + Math.random() * 0.04)),
         label: featureAvg > 48 ? "Malignant" : "Benign"
       }
     ];
