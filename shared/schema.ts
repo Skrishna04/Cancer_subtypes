@@ -82,3 +82,43 @@ export const batchPredictionResponseSchema = z.object({
 });
 
 export type BatchPredictionResponse = z.infer<typeof batchPredictionResponseSchema>;
+
+// Survival Analysis Schemas
+export const survivalDataPointSchema = z.object({
+  time: z.number(),
+  survival_probability: z.number(),
+  at_risk: z.number(),
+  events: z.number(),
+});
+
+export type SurvivalDataPoint = z.infer<typeof survivalDataPointSchema>;
+
+export const kaplanMeierCurveSchema = z.object({
+  group: z.string(),
+  data: z.array(survivalDataPointSchema),
+  median_survival: z.number().optional(),
+  p_value: z.number().optional(),
+});
+
+export type KaplanMeierCurve = z.infer<typeof kaplanMeierCurveSchema>;
+
+export const coxRegressionResultSchema = z.object({
+  variable: z.string(),
+  hazard_ratio: z.number(),
+  confidence_interval_lower: z.number(),
+  confidence_interval_upper: z.number(),
+  p_value: z.number(),
+  coefficient: z.number(),
+});
+
+export type CoxRegressionResult = z.infer<typeof coxRegressionResultSchema>;
+
+export const survivalAnalysisResponseSchema = z.object({
+  dataset: z.enum(cancerDatasets),
+  kaplan_meier_curves: z.array(kaplanMeierCurveSchema),
+  cox_regression: z.array(coxRegressionResultSchema),
+  overall_p_value: z.number(),
+  concordance_index: z.number(),
+});
+
+export type SurvivalAnalysisResponse = z.infer<typeof survivalAnalysisResponseSchema>;

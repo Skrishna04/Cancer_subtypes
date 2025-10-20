@@ -64,17 +64,17 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
       for (let i = 1; i < numPoints; i++) {
         const fpr = i / (numPoints - 1);
         
-        // Create a more realistic ROC curve shape
+        // Create a more realistic ROC curve shape with stronger convexity
         let tpr;
         if (auc >= 0.9) {
-          // High performance: stronger convex curve near top-left
-          tpr = Math.min(1, Math.pow(fpr, 0.2) + (auc - 0.5) * 0.9);
+          // High performance: very strong convex curve near top-left
+          tpr = Math.min(1, Math.pow(fpr, 0.15) + (auc - 0.5) * 0.95);
         } else if (auc >= 0.8) {
-          // Good performance: more convex than before
-          tpr = Math.min(1, Math.pow(fpr, 0.4) + (auc - 0.5) * 0.7);
+          // Good performance: strong convex curve
+          tpr = Math.min(1, Math.pow(fpr, 0.25) + (auc - 0.5) * 0.85);
         } else {
-          // Lower performance: gentle improvement over diagonal
-          tpr = Math.min(1, fpr + (auc - 0.5) * 0.5);
+          // Lower performance: moderate convex improvement over diagonal
+          tpr = Math.min(1, Math.pow(fpr, 0.6) + (auc - 0.5) * 0.6);
         }
         
         // Add some realistic variation
@@ -241,16 +241,16 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
               <h3 className="text-md font-medium text-foreground mb-4">ROC Curves</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateROCData(dataset)} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
+                  <LineChart data={generateROCData(dataset)} margin={{ top: 10, right: 20, left: 20, bottom: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="fpr" 
-                      label={{ value: 'False Positive Rate', position: 'insideBottom', offset: -10 }}
+                      label={{ value: 'False Positive Rate', position: 'insideBottom', offset: -5 }}
                       tick={{ fontSize: 12 }}
                       domain={[0, 1]}
                     />
                     <YAxis 
-                      label={{ value: 'True Positive Rate', angle: -90, position: 'insideLeft' }}
+                      label={{ value: 'True Positive Rate', angle: -90, position: 'insideLeft', offset: 0 }}
                       tick={{ fontSize: 12 }}
                       domain={[0, 1]}
                     />
@@ -260,7 +260,7 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px'
+                        borderRadius: '10px'
                       }}
                     />
                     <Legend />
@@ -269,7 +269,7 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
                       type="monotone" 
                       dataKey="fpr" 
                       stroke="#666" 
-                      strokeWidth={1}
+                      strokeWidth={2}
                       strokeDasharray="5 5"
                       dot={false}
                       name="Random Classifier"

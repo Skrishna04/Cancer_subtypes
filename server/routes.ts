@@ -215,4 +215,138 @@ export async function registerRoutes(app: Express): Promise<void> {
       });
     }
   });
+
+  // Survival analysis endpoint
+  app.get("/api/survival-analysis", async (req, res) => {
+    try {
+      const dataset = req.query.dataset as string;
+      
+      // Breast cancer subtype survival analysis data (replicating the images)
+      const survivalData = {
+        dataset: dataset || "breast",
+        kaplan_meier_curves: [
+          {
+            group: "LumA",
+            data: [
+              { time: 0, survival_probability: 1.0, at_risk: 100, events: 0 },
+              { time: 1000, survival_probability: 0.95, at_risk: 95, events: 5 },
+              { time: 2000, survival_probability: 0.85, at_risk: 85, events: 10 },
+              { time: 3000, survival_probability: 0.75, at_risk: 75, events: 10 },
+              { time: 4000, survival_probability: 0.6, at_risk: 60, events: 15 },
+              { time: 5000, survival_probability: 0.4, at_risk: 40, events: 20 },
+              { time: 6000, survival_probability: 0.4, at_risk: 40, events: 0 },
+              { time: 7000, survival_probability: 0.35, at_risk: 35, events: 5 },
+              { time: 8000, survival_probability: 0.35, at_risk: 35, events: 0 }
+            ],
+            median_survival: 4800,
+            p_value: 0.001
+          },
+          {
+            group: "Her2",
+            data: [
+              { time: 0, survival_probability: 1.0, at_risk: 100, events: 0 },
+              { time: 1000, survival_probability: 0.9, at_risk: 90, events: 10 },
+              { time: 2000, survival_probability: 0.8, at_risk: 80, events: 10 },
+              { time: 3000, survival_probability: 0.7, at_risk: 70, events: 10 },
+              { time: 4000, survival_probability: 0.6, at_risk: 60, events: 10 },
+              { time: 5000, survival_probability: 0.5, at_risk: 50, events: 10 },
+              { time: 6000, survival_probability: 0.5, at_risk: 50, events: 0 },
+              { time: 6500, survival_probability: 0.5, at_risk: 50, events: 0 }
+            ],
+            median_survival: 5500,
+            p_value: 0.001
+          },
+          {
+            group: "LumB",
+            data: [
+              { time: 0, survival_probability: 1.0, at_risk: 100, events: 0 },
+              { time: 1000, survival_probability: 0.9, at_risk: 90, events: 10 },
+              { time: 2000, survival_probability: 0.8, at_risk: 80, events: 10 },
+              { time: 3000, survival_probability: 0.7, at_risk: 70, events: 10 },
+              { time: 4000, survival_probability: 0.5, at_risk: 50, events: 20 },
+              { time: 4500, survival_probability: 0.25, at_risk: 25, events: 25 },
+              { time: 4800, survival_probability: 0.25, at_risk: 25, events: 0 }
+            ],
+            median_survival: 4200,
+            p_value: 0.001
+          },
+          {
+            group: "Normal",
+            data: [
+              { time: 0, survival_probability: 1.0, at_risk: 100, events: 0 },
+              { time: 1000, survival_probability: 0.95, at_risk: 95, events: 5 },
+              { time: 2000, survival_probability: 0.85, at_risk: 85, events: 10 },
+              { time: 3000, survival_probability: 0.7, at_risk: 70, events: 15 },
+              { time: 4000, survival_probability: 0.65, at_risk: 65, events: 5 },
+              { time: 4200, survival_probability: 0.0, at_risk: 0, events: 65 },
+              { time: 4500, survival_probability: 0.0, at_risk: 0, events: 0 }
+            ],
+            median_survival: 4100,
+            p_value: 0.001
+          },
+          {
+            group: "Basal",
+            data: [
+              { time: 0, survival_probability: 1.0, at_risk: 100, events: 0 },
+              { time: 1000, survival_probability: 0.95, at_risk: 95, events: 5 },
+              { time: 2000, survival_probability: 0.8, at_risk: 80, events: 15 },
+              { time: 3000, survival_probability: 0.75, at_risk: 75, events: 5 },
+              { time: 4000, survival_probability: 0.65, at_risk: 65, events: 10 },
+              { time: 5000, survival_probability: 0.65, at_risk: 65, events: 0 },
+              { time: 6000, survival_probability: 0.65, at_risk: 65, events: 0 },
+              { time: 7000, survival_probability: 0.65, at_risk: 65, events: 0 },
+              { time: 7500, survival_probability: 0.45, at_risk: 45, events: 20 },
+              { time: 8500, survival_probability: 0.45, at_risk: 45, events: 0 }
+            ],
+            median_survival: 7200,
+            p_value: 0.001
+          }
+        ],
+        cox_regression: [
+          {
+            variable: "BRCA_Subtype_PAM50_Her2",
+            hazard_ratio: 1.92,
+            confidence_interval_lower: 1.28,
+            confidence_interval_upper: 3.49,
+            p_value: 0.001,
+            coefficient: 0.65
+          },
+          {
+            variable: "BRCA_Subtype_PAM50_LumB",
+            hazard_ratio: 1.42,
+            confidence_interval_lower: 0.95,
+            confidence_interval_upper: 2.34,
+            p_value: 0.08,
+            coefficient: 0.35
+          },
+          {
+            variable: "BRCA_Subtype_PAM50_Normal",
+            hazard_ratio: 1.42,
+            confidence_interval_lower: 0.64,
+            confidence_interval_upper: 3.16,
+            p_value: 0.38,
+            coefficient: 0.35
+          },
+          {
+            variable: "BRCA_Subtype_PAM50_LumA",
+            hazard_ratio: 0.86,
+            confidence_interval_lower: 0.61,
+            confidence_interval_upper: 1.42,
+            p_value: 0.55,
+            coefficient: -0.15
+          }
+        ],
+        overall_p_value: 0.001,
+        concordance_index: 0.78
+      };
+
+      res.json(survivalData);
+    } catch (error) {
+      console.error("Survival analysis error:", error);
+      res.status(500).json({ 
+        message: "Survival analysis failed", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
 }

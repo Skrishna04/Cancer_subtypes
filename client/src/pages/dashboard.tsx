@@ -3,6 +3,7 @@ import { PredictionPanel } from "@/components/prediction-panel";
 import { ModelComparisonPanel } from "@/components/model-comparison-panel";
 import { AnalyticsSection } from "@/components/analytics-section";
 import { CsvAnalysisPanel } from "@/components/csv-analysis-panel";
+import { SurvivalAnalysisPanel } from "@/components/survival-analysis-panel";
 import type { CancerDataset } from "@shared/schema";
 
 export default function Dashboard() {
@@ -47,6 +48,11 @@ export default function Dashboard() {
 
         {/* Analytics Section */}
         <AnalyticsSection selectedDataset={selectedDataset} />
+
+        {/* Survival Analysis Section */}
+        <div className="mt-8">
+          <SurvivalAnalysisPanel selectedDataset={selectedDataset} />
+        </div>
       </div>
     </div>
   );
