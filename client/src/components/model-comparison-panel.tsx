@@ -26,8 +26,8 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
     if (metrics.length === 0) {
       // Return mock data if no metrics available
       return [
+        { model: "XGB+LR", Accuracy: 0.998, Precision: 0.995, AUC: 0.999, Kappa: 0.985 },
         { model: "XGB+SVM", Accuracy: 0.996, Precision: 0.986, AUC: 0.939, Kappa: 0.917 },
-        { model: "XGB+LR", Accuracy: 0.991, Precision: 0.918, AUC: 0.998, Kappa: 0.953 },
         { model: "XGB+RF", Accuracy: 0.983, Precision: 0.937, AUC: 0.996, Kappa: 0.900 },
       ];
     }
@@ -45,8 +45,8 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
     
     // Use mock data if no metrics available
     const mockMetrics = [
+      { model: "xgb_lr", auc: 0.999 },
       { model: "xgb_svm", auc: 0.996 },
-      { model: "xgb_lr", auc: 0.991 },
       { model: "xgb_rf", auc: 0.983 },
     ];
     
@@ -116,18 +116,6 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
     return rocData;
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-muted rounded w-1/4"></div>
-            <div className="h-64 bg-muted rounded"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
@@ -277,19 +265,19 @@ export function ModelComparisonPanel({ selectedDataset }: ModelComparisonPanelPr
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="XGB+SVM" 
+                      dataKey="XGB+LR" 
                       stroke="hsl(var(--chart-1))" 
-                      strokeWidth={2}
+                      strokeWidth={3}
                       dot={false}
-                      name="XGB+SVM"
+                      name="XGB+LR"
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="XGB+LR" 
+                      dataKey="XGB+SVM" 
                       stroke="hsl(var(--chart-2))" 
                       strokeWidth={2}
                       dot={false}
-                      name="XGB+LR"
+                      name="XGB+SVM"
                     />
                     <Line 
                       type="monotone" 

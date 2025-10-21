@@ -249,9 +249,6 @@ export function PredictionPanel({ selectedDataset }: PredictionPanelProps) {
                   }`}>
                     {pred.label}
                   </span>
-                  <span className="text-sm text-muted-foreground">
-                    (Probability: {pred.probability.toFixed(3)})
-                  </span>
                 </div>
               </div>
             ))}

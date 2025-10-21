@@ -22,18 +22,18 @@ export function SurvivalAnalysisPanel({ selectedDataset }: SurvivalAnalysisPanel
       group: "High Risk",
       data: [
         { time: 0, survival_probability: 1.0, at_risk: 100, events: 0 },
-        { time: 6, survival_probability: 0.85, at_risk: 95, events: 5 },
-        { time: 12, survival_probability: 0.72, at_risk: 85, events: 8 },
-        { time: 18, survival_probability: 0.58, at_risk: 70, events: 10 },
-        { time: 24, survival_probability: 0.45, at_risk: 55, events: 9 },
-        { time: 30, survival_probability: 0.35, at_risk: 40, events: 6 },
-        { time: 36, survival_probability: 0.28, at_risk: 30, events: 5 },
-        { time: 42, survival_probability: 0.22, at_risk: 22, events: 4 },
-        { time: 48, survival_probability: 0.18, at_risk: 15, events: 3 },
-        { time: 54, survival_probability: 0.15, at_risk: 10, events: 2 },
-        { time: 60, survival_probability: 0.12, at_risk: 6, events: 1 },
+        { time: 180, survival_probability: 0.85, at_risk: 95, events: 5 },
+        { time: 360, survival_probability: 0.72, at_risk: 85, events: 8 },
+        { time: 540, survival_probability: 0.58, at_risk: 70, events: 10 },
+        { time: 720, survival_probability: 0.45, at_risk: 55, events: 9 },
+        { time: 900, survival_probability: 0.35, at_risk: 40, events: 6 },
+        { time: 1080, survival_probability: 0.28, at_risk: 30, events: 5 },
+        { time: 1260, survival_probability: 0.22, at_risk: 22, events: 4 },
+        { time: 1440, survival_probability: 0.18, at_risk: 15, events: 3 },
+        { time: 1620, survival_probability: 0.15, at_risk: 10, events: 2 },
+        { time: 1800, survival_probability: 0.12, at_risk: 6, events: 1 },
       ],
-      median_survival: 18.5,
+      median_survival: 555,
       p_value: 0.001
     };
 
@@ -41,18 +41,18 @@ export function SurvivalAnalysisPanel({ selectedDataset }: SurvivalAnalysisPanel
       group: "Low Risk",
       data: [
         { time: 0, survival_probability: 1.0, at_risk: 100, events: 0 },
-        { time: 6, survival_probability: 0.98, at_risk: 100, events: 2 },
-        { time: 12, survival_probability: 0.95, at_risk: 98, events: 3 },
-        { time: 18, survival_probability: 0.92, at_risk: 95, events: 3 },
-        { time: 24, survival_probability: 0.89, at_risk: 92, events: 3 },
-        { time: 30, survival_probability: 0.86, at_risk: 89, events: 3 },
-        { time: 36, survival_probability: 0.83, at_risk: 86, events: 3 },
-        { time: 42, survival_probability: 0.80, at_risk: 83, events: 3 },
-        { time: 48, survival_probability: 0.77, at_risk: 80, events: 3 },
-        { time: 54, survival_probability: 0.74, at_risk: 77, events: 3 },
-        { time: 60, survival_probability: 0.71, at_risk: 74, events: 3 },
+        { time: 180, survival_probability: 0.98, at_risk: 100, events: 2 },
+        { time: 360, survival_probability: 0.95, at_risk: 98, events: 3 },
+        { time: 540, survival_probability: 0.92, at_risk: 95, events: 3 },
+        { time: 720, survival_probability: 0.89, at_risk: 92, events: 3 },
+        { time: 900, survival_probability: 0.86, at_risk: 89, events: 3 },
+        { time: 1080, survival_probability: 0.83, at_risk: 86, events: 3 },
+        { time: 1260, survival_probability: 0.80, at_risk: 83, events: 3 },
+        { time: 1440, survival_probability: 0.77, at_risk: 80, events: 3 },
+        { time: 1620, survival_probability: 0.74, at_risk: 77, events: 3 },
+        { time: 1800, survival_probability: 0.71, at_risk: 74, events: 3 },
       ],
-      median_survival: 72.0,
+      median_survival: 2160,
       p_value: 0.001
     };
 
@@ -167,7 +167,7 @@ export function SurvivalAnalysisPanel({ selectedDataset }: SurvivalAnalysisPanel
                       dataKey="time" 
                       label={{ value: 'Time (days)', position: 'insideBottom', offset: -10 }}
                       tick={{ fontSize: 12 }}
-                      domain={[0, 8000]}
+                      domain={[0, 2000]}
                     />
                     <YAxis 
                       label={{ value: 'Survival Probability', angle: -90, position: 'insideLeft' }}
@@ -211,7 +211,7 @@ export function SurvivalAnalysisPanel({ selectedDataset }: SurvivalAnalysisPanel
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Median Survival:</span>
-                      <span className="font-medium">{curve.median_survival?.toFixed(1)} months</span>
+                      <span className="font-medium">{curve.median_survival?.toFixed(0)} days</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">P-value:</span>
